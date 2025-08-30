@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import './App.css'
-
+import Navbar from './components/Navbar'
+import Main from './components/Main'
+import { createBrowserRouter,RouterProvider,Routes ,Route } from "react-router-dom";
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
-    <div className="text-6xl">Helooooo</div>
+  <Navbar />
+  <Main />
     </>
   )
 }
