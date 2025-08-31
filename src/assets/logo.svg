@@ -1,6 +1,16 @@
-<svg width="100%" height="100%" viewBox="0 0 1200 300" xmlns="http://www.w3.org/2000/svg">
-  <polyline points="200,150 400,50 400,250" fill="none" stroke="#222427" stroke-width="20" stroke-linejoin="round" stroke-linecap="round"/>
-  <polyline points="1000,150 800,50 800,250" fill="none" stroke="#222427" stroke-width="20" stroke-linejoin="round" stroke-linecap="round"/>
-  <text x="420" y="190" font-family="Limelight, sans-serif" font-size="120" font-weight="bold" fill="#222427">Am</text>
-  <text x="600" y="190" font-family="Arial Black, sans-serif" font-size="90" font-weight="bold" fill="#f0f0f0">PASS</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Left Arrow -->
+  <polyline points="80,256 180,100 180,412" fill="none" stroke="#222427" stroke-width="40" stroke-linejoin="round" stroke-linecap="round"/>
+  
+  <!-- Right Arrow -->
+  <polyline points="432,256 332,100 332,412" fill="none" stroke="#222427" stroke-width="40" stroke-linejoin="round" stroke-linecap="round"/>
+  
+  <!-- Text "AmPASS" -->
+  <text x="200" y="290" font-family="Arial Black, sans-serif" font-size="80" font-weight="bold" fill="#222427">
+    Am
+  </text>
+  <text x="280" y="290" font-family="Arial Black, sans-serif" font-size="60" font-weight="bold" fill="#f0f0f0">
+    PASS
+  </text>
 </svg>
+

@@ -1,8 +1,11 @@
 import { useForm } from "react-hook-form";
 import React from "react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 export default function Add() {
-  const save = useRef()
+  const save = useRef(null);
+  const message = useRef(null);
+  const tick = useRef(null);
+  const progress = useRef(null)
   const {
     register,
     handleSubmit,
@@ -12,23 +15,75 @@ export default function Add() {
   } = useForm();
 
   const onSubmit = (data) => {
-  
     console.log(data);
-  
-  reset();
+    save.current.classList.replace("-translate-y-[200%]", "translate-y-0");
+    progress.current.classList.add("w-full");
 
+    // Show tick + message after 1s
+    setTimeout(() => {
+      message.current.classList.replace("hidden", "block");
+      tick.current.classList.replace("hidden", "block");
+    }, 1000);
 
+    // Hide everything after 3s
+    setTimeout(() => {
+      save.current.classList.replace("translate-y-0", "-translate-y-[200%]");
+      message.current.classList.replace("block", "hidden");
+      tick.current.classList.replace("block", "hidden");
+      progress.current.classList.remove("w-full");
+    }, 3500);
+
+    reset();
   };
 
   return (
-    /* "handleSubmit" will validate your inputs before invoking "onSubmit" */
+    <div className="md:w-[85vw] w-screen h-[80.8vh] md:h-[89.9vh] overflow-x-hidden relative">
+      {/* ✅ Toast Notification */}
+      <div
+        ref={save}
+        className="savesuccessfully transform -translate-y-[200%] transition-all duration-500 ease-out
+                   absolute top-4 right-4 z-50 w-[320px] p-4
+                   bg-[#1E1E1E] text-white rounded-lg shadow-lg flex items-center gap-3"
+      >
+        {/* Success Icon */}
+        <svg
+          ref={tick}
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-6 h-6 text-green-500 flex-shrink-0 hidden"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
 
-    <div ref={save}  className="md:w-[85vw] w-screen h-[80.8vh]  md:h-[89.9vh] overflow-x-hidden">
-      <div className="savesuccessfully text-xl font-bold transform -translate-y-[200%] transition-all text-green-600 p-5 w-[290px] top-1.5 right-1.5 bg-[#222831] absolute flex items-center justify-center">
-        <span>Saved Successfully !</span>
-        <div className="seek h-1 absolute w-full bottom-0 bg-green-600"></div>
+        {/* Message */}
+        <div ref={message} className="flex-1 hidden">
+          <p className="font-semibold">Saved Successfully</p>
+          <p className="text-sm text-gray-300">Your password have been created successfully.</p>
+        </div>
+
+        {/* Close Button */}
+        <button
+          className="text-gray-400 hover:text-gray-200"
+          onClick={() => {
+            save.current.classList.replace("translate-y-0", "-translate-y-[200%]");
+          }}
+        >
+          ✕
+        </button>
+
+        {/* Progress bar */}
+        <div className="absolute left-0 bottom-0 h-1 w-full bg-green-700/30 rounded-b-lg overflow-hidden">
+          <div
+            ref={progress}
+            className="seek h-full bg-green-500 w-[1%] transition-all duration-[1000ms] ease-linear"
+          ></div>
+        </div>
       </div>
-      <div className="flex flex-col w-[50%] md:w-[30%] justify-center items-center">
+
+      <div className="flex flex-col w-[60%] md:w-[30%] justify-center items-center">
         <div className="md:h-25 h-20 w-70 md:w-90 flex ">
           <svg
             className="w-full h-full"
@@ -105,7 +160,7 @@ export default function Add() {
         />
         {errors.exampleRequired && <span>This field is required</span>}
         <button
-          className="bg-[#393E46] border-[#625F5F] border-1 h-14 text-white cursor-pointer rounded-4xl mx-auto w-[40%] md:w-[16%] text-2xl font-bold "
+          className="bg-[#393E46] active:scale-[0.96] transform h-14 text-white cursor-pointer rounded-4xl mx-auto w-[40%] md:w-[16%] text-xl font-bold "
           type="submit"
         >
           Save
