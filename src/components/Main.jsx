@@ -29,7 +29,7 @@ export default function Main() {
           <div className="flex flex-col md:flex-row">
             <div
               ref={clipboard}
-              className="clipboard transition-all duration-500 delay-100 absolute h-10 w-[200px] bg-[#222831] text-green-500 transform -translate-y-[200%] font-bold top-1 left-1 flex items-center justify-center"
+              className="clipboard transition-all duration-500 delay-100 absolute h-10 w-[200px] bg-[#222831] text-white transform -translate-y-[200%] font-bold top-1 left-1 flex items-center justify-center"
             >
               Copied to Clipboard !
             </div>

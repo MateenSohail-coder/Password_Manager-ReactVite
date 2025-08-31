@@ -7,7 +7,7 @@ export default function Sidebar() {
         <NavLink
           to="/"
           className={({ isActive }) =>
-            `md:w-full md:h-auto h-full w-[33.3%] p-2.5 transition-colors flex items-center justify-center md:justify-start duration-200 border-b-1 border-b-[#6283C0] ${
+            `md:w-full md:h-auto h-full w-[33.3%] p-2.5 transition-colors flex items-center justify-center md:justify-start duration-200  ${
               isActive ? "bg-[#6283C0]" : ""
             }`
           }
@@ -17,7 +17,7 @@ export default function Sidebar() {
         <NavLink
           to="/Favourite"
           className={({ isActive }) =>
-            `md:w-full md:h-auto h-full w-[33.3%] p-2.5 transition-colors duration-200 border-b-1 justify-between flex items-center  border-b-[#6283C0] ${
+            `md:w-full md:h-auto h-full w-[33.3%] p-2.5 transition-colors duration-200 justify-between flex items-center   ${
               isActive ? "bg-[#6283C0]" : ""
             }`
           }
@@ -25,7 +25,7 @@ export default function Sidebar() {
           <span>Favourite</span>
           <lord-icon
             src="https://cdn.lordicon.com/rrbmabsx.json"
-            trigger="click"
+            trigger="hover"
             stroke="bold"
             colors="primary:#ffffff,secondary:#b4b4b4"
             className="w-8 h-8"
@@ -34,7 +34,7 @@ export default function Sidebar() {
         <NavLink
           to="/Add"
           className={({ isActive }) =>
-            `md:w-full md:h-auto h-full w-[33.3%] p-2.5 transition-colors duration-200 border-b-1 flex items-center justify-between gap-1.5 border-b-[#6283C0] ${
+            `md:w-full md:h-auto h-full w-[33.3%] p-2.5 transition-colors duration-200 flex items-center justify-between gap-1.5 ${
               isActive ? "bg-[#6283C0]" : ""
             }`
           }
@@ -42,7 +42,7 @@ export default function Sidebar() {
           <span>Add</span>{" "}
           <lord-icon
             src="https://cdn.lordicon.com/vjgknpfx.json"
-            trigger="click"
+            trigger="hover"
             stroke="bold"
             colors="primary:#ffffff,secondary:#b4b4b4"
             className="w-8 h-8"
