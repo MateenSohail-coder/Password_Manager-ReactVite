@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useContext } from "react";
+import { DataContext } from "../context/context";
 import { NavLink } from "react-router-dom";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Add from "./Add";
@@ -8,31 +9,148 @@ export default function Main() {
   const defaultColor = "primary:#545454,secondary:#848484";
   const goldColor = "primary:gold,secondary:gold";
   const clipboard = useRef();
-  const [favourites, setFavourites] = useState([
-    {
-      id:1,
-      site:'ww.mateen.com',
-      password:12234,
-      username:'mateen',
-      isFavourite:true
+  const [editingItem, setEditingItem] = useState(null); // the item being edited
+  const [editForm, setEditForm] = useState({}); // form data for editing
+  const handleEditClick = (item) => {
+    setEditingItem(item);
+    setEditForm({ ...item }); // pre-fill form
+  };
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+const handleEditSubmit = async (e) => {
+  e.preventDefault();
+
+  const { _id, ...payload } = editForm; // remove _id
+
+  console.log("PUT request ID:", _id);
+  console.log("Data being sent:", payload);
+
+  try {
+    const response = await fetch(`http://localhost:3000/passwords/${_id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log("Response:", data);
+
+    if (data.success) {
+      setFavourites((prev) =>
+        prev.map((item) => (item._id === _id ? { ...item, ...payload } : item))
+      );
+      setEditingItem(null);
+    } else {
+      console.error("Update failed:", data.message);
     }
-  ]);
+  } catch (err) {
+    console.error("Error updating item:", err);
+  }
+};
+
+
+
+  const { dataList } = useContext(DataContext);
+
+  const [favourites, setFavourites] = useState([]);
+  const getpasswords = async () => {
+    let req = await fetch("http://localhost:3000/");
+    let password = await req.json();
+    if (password) {
+      setFavourites((prev) => [
+        ...prev,
+        ...(Array.isArray(password) ? password : [password]),
+      ]);
+      console.log(password);
+    } else {
+      console.log("error");
+    }
+  };
+
+  const deletePassword = async (id) => {
+    try {
+      let res = await fetch(`http://localhost:3000/passwords/${id}`, {
+        method: "DELETE",
+      });
+
+      let data = await res.json();
+
+      if (data.success) {
+        // Remove from local state
+        setFavourites((prev) => prev.filter((item) => item._id !== id));
+        console.log("Deleted successfully");
+      } else {
+        console.error("Delete failed:", data.message);
+      }
+    } catch (err) {
+      console.error("Error deleting password:", err);
+    }
+  };
+
+  useEffect(() => {
+    getpasswords();
+  }, []);
+
+  useEffect(() => {
+    if (dataList.length > 0) {
+      const withIds = dataList.map((item) => ({
+        ...item,
+      }));
+
+      setFavourites((prev) => [...prev, ...withIds]);
+    }
+  }, [dataList]);
+
+  useEffect(() => {
+    console.log("dataList changed:", dataList);
+  }, [dataList]);
+
+  useEffect(() => {
+    console.log("favourites updated:", favourites);
+  }, [favourites]);
 
   // ✅ Toggle favourite status
-  const toggleBookmark = (id) => {
+  const toggleBookmark = async (id) => {
     setFavourites((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, isFavourite: !item.isFavourite } : item
+        item._id === id ? { ...item, isFavourite: !item.isFavourite } : item
       )
     );
+    try {
+      let res = await fetch(`http://localhost:3000/passwords/${id}/favourite`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
+      let data = await res.json();
+
+      if (data.success) {
+        setFavourites((prev) =>
+          prev.map((item) =>
+            item._id === id
+              ? { ...item, isFavourite: data.updated.isFavourite }
+              : item
+          )
+        );
+      }
+    } catch (err) {
+      console.error("Error toggling favourite:", err);
+    }
   };
-  const Copytoclipboard = () => {
-    clipboard.current.classList.remove("-translate-y-[200%]");
-    clipboard.current.classList.add("translate-y-[0%]");
-    setTimeout(() => {
-      clipboard.current.classList.remove("translate-y-[0%]");
-      clipboard.current.classList.add("-translate-y-[200%]");
-    }, 1500);
+  const Copytoclipboard = (text) => {
+    // ✅ copy text
+    navigator.clipboard.writeText(text).then(() => {
+      // ✅ show notification (slide down)
+      clipboard.current.classList.remove("-translate-y-[200%]");
+      clipboard.current.classList.add("translate-y-[0%]");
+
+      // ✅ hide notification after 1.5s
+      setTimeout(() => {
+        clipboard.current.classList.remove("translate-y-[0%]");
+        clipboard.current.classList.add("-translate-y-[200%]");
+      }, 1500);
+    });
   };
   return (
     <Routes>
@@ -65,7 +183,7 @@ export default function Main() {
                     </div>
                   ) : (
                     // Table
-                    <table className="hidden md:table w-full border-0 bg-[#6E89B1]/21 rounded-lg shadow-md">
+                    <table className="hidden md:table w-full border-0 bg-[#6E89B1]/22 rounded-lg shadow-md">
                       <thead className="bg-[#5F6877]">
                         <tr className="text-white">
                           <th className="px-6 py-3 text-left text-sm font-bold">
@@ -85,12 +203,17 @@ export default function Main() {
                       <tbody>
                         {favourites.map((item) => (
                           <tr
-                            key={item.id}
-                            className="border-b text-[#222831] border-b-[#000000]/26 font-sans text-[16px] font-medium"
+                            key={item._id}
+                            className="border-b text-[#222831] hover:bg-[#6E89B1]/21 border-b-[#000000]/26 font-sans text-[16px] font-medium"
                           >
                             {/* Site */}
-                            <td className="px-6 py-4 break-words hover:underline">
-                              <a href={item.site}>{item.site}</a>
+                            <td className="px-6 py-4 align-top flex">
+                              <a
+                                className="block max-w-[200px] break-all hover:underline whitespace-normal text-blue-600"
+                                href={item.site}
+                              >
+                                {item.site}
+                              </a>
                               <button
                                 className="ml-2 inline-block align-middle"
                                 onClick={() => Copytoclipboard(item.site)}
@@ -124,24 +247,31 @@ export default function Main() {
 
                             {/* Password */}
                             <td className="px-6 py-4">
-                              <span>.........</span>
-                              <button
-                                className="ml-2"
-                                onClick={() => Copytoclipboard(item.password)}
-                              >
-                                <lord-icon
-                                  src="https://cdn.lordicon.com/tsrgicte.json"
-                                  trigger="click"
-                                  stroke="bold"
-                                  colors="primary:#545454,secondary:green"
-                                  className="w-5 h-5"
-                                ></lord-icon>
-                              </button>
+                              <div className="flex items-center">
+                                <input
+                                  type="password"
+                                  value={item.password}
+                                  readOnly
+                                  className="w-auto max-w-[100px] border-none focus:ring-0 font-mono bg-transparent text-center"
+                                />
+                                <button
+                                  onClick={() => Copytoclipboard(item.password)}
+                                  className="ml-1 p-0 flex items-center"
+                                >
+                                  <lord-icon
+                                    src="https://cdn.lordicon.com/tsrgicte.json"
+                                    trigger="click"
+                                    stroke="bold"
+                                    colors="primary:#545454,secondary:green"
+                                    className="w-5 h-5"
+                                  ></lord-icon>
+                                </button>
+                              </div>
                             </td>
 
                             {/* Actions */}
-                            <td className="px-6 py-4 flex space-x-2">
-                              <button>
+                            <td className="px-6 py-4 flex items-center space-x-2">
+                              <button onClick={() => handleEditClick(item)}>
                                 <lord-icon
                                   src="https://cdn.lordicon.com/fikcyfpp.json"
                                   trigger="click"
@@ -150,7 +280,11 @@ export default function Main() {
                                   className="w-7 h-7"
                                 ></lord-icon>
                               </button>
-                              <button>
+                              <button
+                                onClick={() => {
+                                  deletePassword(item._id);
+                                }}
+                              >
                                 <lord-icon
                                   src="https://cdn.lordicon.com/jzinekkv.json"
                                   trigger="click"
@@ -159,7 +293,7 @@ export default function Main() {
                                   className="w-7 h-7"
                                 ></lord-icon>
                               </button>
-                              <button onClick={() => toggleBookmark(item.id)}>
+                              <button onClick={() => toggleBookmark(item._id)}>
                                 <lord-icon
                                   src="https://cdn.lordicon.com/rrbmabsx.json"
                                   trigger="click"
@@ -183,24 +317,34 @@ export default function Main() {
                   <div className="md:hidden space-y-4 mt-3 mb-3">
                     {favourites.map((item) => (
                       <div
-                        key={item.id}
+                        key={item._id}
                         className="border rounded-lg p-4 bg-[#6E89B1]/10 shadow-md text-[#222831]"
                       >
                         {/* Site */}
-                        <p className="text-1xl font-bold text-[#5F6877]">
-                          Site
-                        </p>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="break-words">{item.site}</p>
-                          <button onClick={() => Copytoclipboard(item.site)}>
-                            <lord-icon
-                              src="https://cdn.lordicon.com/tsrgicte.json"
-                              trigger="click"
-                              stroke="bold"
-                              colors="primary:#545454,secondary:green"
-                              className="w-5 h-5"
-                            ></lord-icon>
-                          </button>
+                        <div className="mb-4">
+                          <p className="text-sm font-semibold text-[#5F6877]">
+                            Site
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <a
+                              href={item.site}
+                              className="font-medium text-blue-700 hover:underline break-words whitespace-normal break-all"
+                            >
+                              {item.site}
+                            </a>
+                            <button
+                              onClick={() => Copytoclipboard(item.site)}
+                              className="ml-2"
+                            >
+                              <lord-icon
+                                src="https://cdn.lordicon.com/tsrgicte.json"
+                                trigger="click"
+                                stroke="bold"
+                                colors="primary:#545454,secondary:green"
+                                className="w-5 h-5"
+                              ></lord-icon>
+                            </button>
+                          </div>
                         </div>
 
                         {/* Username */}
@@ -227,7 +371,11 @@ export default function Main() {
                           Password
                         </p>
                         <div className="flex items-center justify-between mb-2">
-                          <p>.........</p>
+                          <input
+                            type="password"
+                            readOnly
+                            value={item.password}
+                          />
                           <button
                             onClick={() => Copytoclipboard(item.password)}
                           >
@@ -242,8 +390,8 @@ export default function Main() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex space-x-3 mt-3">
-                          <button>
+                        <div className="flex justify-end space-x-4 mt-4">
+                          <button onClick={() => handleEditClick(item)}>
                             <lord-icon
                               src="https://cdn.lordicon.com/fikcyfpp.json"
                               trigger="click"
@@ -252,7 +400,7 @@ export default function Main() {
                               className="w-7 h-7"
                             ></lord-icon>
                           </button>
-                          <button>
+                          <button onClick={() => deletePassword(item._id)}>
                             <lord-icon
                               src="https://cdn.lordicon.com/jzinekkv.json"
                               trigger="click"
@@ -261,7 +409,7 @@ export default function Main() {
                               className="w-7 h-7"
                             ></lord-icon>
                           </button>
-                          <button onClick={() => toggleBookmark(item.id)}>
+                          <button onClick={() => toggleBookmark(item._id)}>
                             <lord-icon
                               src="https://cdn.lordicon.com/rrbmabsx.json"
                               trigger="click"
@@ -281,6 +429,55 @@ export default function Main() {
                 </div>
               </div>
             </main>
+            {editingItem && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <form
+                  onSubmit={handleEditSubmit}
+                  className="bg-white p-6 rounded-lg w-96 space-y-4"
+                >
+                  <h2 className="text-lg font-bold">Edit Password</h2>
+                  <input
+                    type="text"
+                    name="site"
+                    value={editForm.site}
+                    onChange={handleEditChange}
+                    placeholder="Site"
+                    className="w-full p-2 border rounded"
+                  />
+                  <input
+                    type="text"
+                    name="username"
+                    value={editForm.username}
+                    onChange={handleEditChange}
+                    placeholder="Username"
+                    className="w-full p-2 border rounded"
+                  />
+                  <input
+                    type="text"
+                    name="password"
+                    value={editForm.password}
+                    onChange={handleEditChange}
+                    placeholder="Password"
+                    className="w-full p-2 border rounded"
+                  />
+                  <div className="flex justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setEditingItem(null)}
+                      className="px-4 py-2 bg-gray-300 rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-blue-500 text-white rounded"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         }
       />
@@ -333,29 +530,34 @@ export default function Main() {
                             } text-[#222831] border-b-[#000000]/10 font-sans text-[16px] font-medium`}
                           >
                             {/* Site */}
-                            <td className="px-6 py-4 break-words">
-                              <div className="flex items-center space-x-2">
-                                {item.isFavourite && (
-                                  <span className="bg-yellow-400 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                    ★ Favourite
-                                  </span>
-                                )}
-                                <span className="font-semibold text-gray-700">
-                                  {item.site}
-                                </span>
-                                <button
-                                  className="ml-2 inline-block align-middle"
-                                  onClick={() => Copytoclipboard(item.site)}
+
+                            <td className="px-6 py-4 align-top flex gap-1">
+                              {item.isFavourite && (
+                                <span
+                                  className="bg-yellow-400 text-white text-xs font-bold  h-5 pl-2
+                                  pr-2 rounded-full"
                                 >
-                                  <lord-icon
-                                    src="https://cdn.lordicon.com/tsrgicte.json"
-                                    trigger="click"
-                                    stroke="bold"
-                                    colors="primary:#545454,secondary:green"
-                                    className="w-5 h-5"
-                                  ></lord-icon>
-                                </button>
-                              </div>
+                                  ★ Favourite
+                                </span>
+                              )}
+                              <a
+                                className="block max-w-[200px] break-all hover:underline whitespace-normal text-blue-600"
+                                href={item.site}
+                              >
+                                {item.site}
+                              </a>
+                              <button
+                                className="ml-2 inline-block align-middle"
+                                onClick={() => Copytoclipboard(item.site)}
+                              >
+                                <lord-icon
+                                  src="https://cdn.lordicon.com/tsrgicte.json"
+                                  trigger="click"
+                                  stroke="bold"
+                                  colors="primary:#545454,secondary:green"
+                                  className="w-5 h-5"
+                                ></lord-icon>
+                              </button>
                             </td>
 
                             {/* Username */}
@@ -379,26 +581,31 @@ export default function Main() {
 
                             {/* Password */}
                             <td className="px-6 py-4">
-                              <span className="tracking-widest font-mono">
-                                ••••••••
-                              </span>
-                              <button
-                                className="ml-2"
-                                onClick={() => Copytoclipboard(item.password)}
-                              >
-                                <lord-icon
-                                  src="https://cdn.lordicon.com/tsrgicte.json"
-                                  trigger="click"
-                                  stroke="bold"
-                                  colors="primary:#545454,secondary:green"
-                                  className="w-5 h-5"
-                                ></lord-icon>
-                              </button>
+                              <div className="flex items-center">
+                                <input
+                                  type="password"
+                                  value={item.password}
+                                  readOnly
+                                  className="w-auto max-w-[100px] border-none focus:ring-0 font-mono bg-transparent text-center"
+                                />
+                                <button
+                                  onClick={() => Copytoclipboard(item.password)}
+                                  className="ml-1 p-0 flex items-center"
+                                >
+                                  <lord-icon
+                                    src="https://cdn.lordicon.com/tsrgicte.json"
+                                    trigger="click"
+                                    stroke="bold"
+                                    colors="primary:#545454,secondary:green"
+                                    className="w-5 h-5"
+                                  ></lord-icon>
+                                </button>
+                              </div>
                             </td>
 
                             {/* Actions */}
                             <td className="px-6 py-4 flex space-x-3">
-                              <button>
+                              <button onClick={() => handleEditClick(item)}>
                                 <lord-icon
                                   src="https://cdn.lordicon.com/fikcyfpp.json"
                                   trigger="click"
@@ -408,7 +615,7 @@ export default function Main() {
                                 ></lord-icon>
                               </button>
 
-                              <button>
+                              <button onClick={() => deletePassword(item._id)}>
                                 <lord-icon
                                   src="https://cdn.lordicon.com/jzinekkv.json"
                                   trigger="click"
@@ -418,7 +625,7 @@ export default function Main() {
                                 ></lord-icon>
                               </button>
 
-                              <button onClick={() => toggleBookmark(item.id)}>
+                              <button onClick={() => toggleBookmark(item._id)}>
                                 <lord-icon
                                   src="https://cdn.lordicon.com/rrbmabsx.json"
                                   trigger="click"
@@ -460,14 +667,18 @@ export default function Main() {
                         )}
 
                         {/* Site */}
+
                         <div className="mb-4">
                           <p className="text-sm font-semibold text-[#5F6877]">
                             Site
                           </p>
                           <div className="flex items-center justify-between">
-                            <p className="font-medium text-[#222831] break-words">
+                            <a
+                              href={item.site}
+                              className="font-medium text-blue-700 hover:underline break-words whitespace-normal break-all"
+                            >
                               {item.site}
-                            </p>
+                            </a>
                             <button
                               onClick={() => Copytoclipboard(item.site)}
                               className="ml-2"
@@ -513,9 +724,11 @@ export default function Main() {
                             Password
                           </p>
                           <div className="flex items-center justify-between">
-                            <p className="font-medium text-[#222831]">
-                              ********
-                            </p>
+                            <input
+                              type="password"
+                              value={item.password}
+                              readOnly
+                            />
                             <button
                               onClick={() => Copytoclipboard(item.password)}
                               className="ml-2"
@@ -533,7 +746,7 @@ export default function Main() {
 
                         {/* Actions */}
                         <div className="flex justify-end space-x-4 mt-4">
-                          <button>
+                          <button onClick={() => handleEditClick(item)}>
                             <lord-icon
                               src="https://cdn.lordicon.com/fikcyfpp.json"
                               trigger="click"
@@ -542,7 +755,7 @@ export default function Main() {
                               className="w-7 h-7"
                             ></lord-icon>
                           </button>
-                          <button>
+                          <button onClick={() => deletePassword(item._id)}>
                             <lord-icon
                               src="https://cdn.lordicon.com/jzinekkv.json"
                               trigger="click"
@@ -551,7 +764,7 @@ export default function Main() {
                               className="w-7 h-7"
                             ></lord-icon>
                           </button>
-                          <button onClick={() => toggleBookmark(item.id)}>
+                          <button onClick={() => toggleBookmark(item._id)}>
                             <lord-icon
                               src="https://cdn.lordicon.com/rrbmabsx.json"
                               trigger="click"

@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 export default function Sidebar() {
   return (
-    <section className="sidebar  h-12 md:h-[89.9vh] w-screen md:w-[15vw] bg-[#222831] text-white">
+    <section className="sidebar  h-10 md:h-[89.9vh] w-screen md:w-[15vw] bg-[#222831] text-white">
       <div className="flex flex-row md:flex-col md:h-auto h-full gap-[1px] md:gap-0 text-white font-bold md:text-[15px] text-[13px] lg:text-xl">
         <NavLink
           to="/"

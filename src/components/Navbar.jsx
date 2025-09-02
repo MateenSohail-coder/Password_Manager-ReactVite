@@ -53,16 +53,20 @@ export default function Navbar() {
           </svg>
         </div>
         <div>
-          <button className=" p-1.5 border-2 text-neutral-200 font-bold cursor-pointer border-neutral-200 bg-[#222427] rounded-4xl flex items-center justify-center gap-2 hover:bg-neutral-700 active:scale-[0.96] transform  transition-all ">
-            <lord-icon
-              src="https://cdn.lordicon.com/jjxzcivr.json"
-              trigger="boomerang"
-              stroke="bold"
-              colors="primary:#ffffff,secondary:#ffffff"
-              className="md:h-8 h-6 w-6 md:w-8 fill-neutral-200"
-            ></lord-icon>
-            <span className="hidden md:inline">Github</span>
-          </button>
+        <a href="https://github.com/MateenSohail-coder/Password_Manager-ReactVite.git" target="_blank" rel="noopener noreferrer">
+  <button
+    className=" p-1.5 border-2 text-neutral-200 font-bold cursor-pointer border-neutral-200 bg-[#222427] rounded-4xl flex items-center justify-center gap-2 hover:bg-neutral-700 active:scale-[0.96] transform transition-all "
+  >
+    <lord-icon
+      src="https://cdn.lordicon.com/jjxzcivr.json"
+      trigger="boomerang"
+      stroke="bold"
+      colors="primary:#ffffff,secondary:#ffffff"
+      className="md:h-8 h-6 w-6 md:w-8 fill-neutral-200"
+    ></lord-icon>
+    <span className="hidden md:inline">Github</span>
+  </button>
+</a>
         </div>
       </nav>
     </div>

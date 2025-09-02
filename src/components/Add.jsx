@@ -1,11 +1,17 @@
 import { useForm } from "react-hook-form";
-import React from "react";
-import { useRef, useState } from "react";
+import React, { useContext } from "react";
+import { DataContext } from "../context/context";
+import { useRef, useState, useEffect } from "react";
+import { ToastContainer, toast, Slide, Bounce } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 export default function Add() {
   const save = useRef(null);
   const message = useRef(null);
   const tick = useRef(null);
-  const progress = useRef(null)
+  const progress = useRef(null);
+  const [show, setShow] = useState(false);
+  const { setDataList } = useContext(DataContext);
   const {
     register,
     handleSubmit,
@@ -14,12 +20,24 @@ export default function Add() {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = (data) => {
+  const onSubmit = async(data) => {
     console.log(data);
+      try {
+    let res = await fetch("http://localhost:3000/passwords", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+
+    let Data = await res.json();
+    console.log("Saved:", Data);
+  } catch (err) {
+    console.error("Error saving password:", err);
+  }
     save.current.classList.replace("-translate-y-[200%]", "translate-y-0");
     progress.current.classList.add("w-full");
 
-    // Show tick + message after 1s
+    setDataList((prev) => [...prev, data]);
     setTimeout(() => {
       message.current.classList.replace("hidden", "block");
       tick.current.classList.replace("hidden", "block");
@@ -27,48 +45,55 @@ export default function Add() {
 
     // Hide everything after 3s
     setTimeout(() => {
-      save.current.classList.replace("translate-y-0", "-translate-y-[200%]");
       message.current.classList.replace("block", "hidden");
       tick.current.classList.replace("block", "hidden");
       progress.current.classList.remove("w-full");
+      save.current.classList.replace("translate-y-0", "-translate-y-[200%]");
     }, 3500);
 
     reset();
   };
-
   return (
     <div className="md:w-[85vw] w-screen h-[80.8vh] md:h-[89.9vh] overflow-x-hidden relative">
-      {/* ✅ Toast Notification */}
       <div
         ref={save}
         className="savesuccessfully transform -translate-y-[200%] transition-all duration-500 ease-out
-                   absolute top-4 right-4 z-50 w-[320px] p-4
+                   absolute top-4 right-4 z-50 w-[320px] p-3
                    bg-[#1E1E1E] text-white rounded-lg shadow-lg flex items-center gap-3"
       >
         {/* Success Icon */}
         <svg
           ref={tick}
           xmlns="http://www.w3.org/2000/svg"
-          className="w-6 h-6 text-green-500 flex-shrink-0 hidden"
+          className="w-5 h-5 text-green-500 flex-shrink-0 hidden"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
           strokeWidth="2"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
         </svg>
 
         {/* Message */}
         <div ref={message} className="flex-1 hidden">
           <p className="font-semibold">Saved Successfully</p>
-          <p className="text-sm text-gray-300">Your password have been created successfully.</p>
+          <p className="text-[11px] text-gray-300">
+            Your password have been created successfully.
+          </p>
         </div>
 
         {/* Close Button */}
         <button
           className="text-gray-400 hover:text-gray-200"
           onClick={() => {
-            save.current.classList.replace("translate-y-0", "-translate-y-[200%]");
+            save.current.classList.replace(
+              "translate-y-0",
+              "-translate-y-[200%]"
+            );
           }}
         >
           ✕
@@ -144,20 +169,36 @@ export default function Add() {
         <input
           className="bg-[#D9D9D9] p-5 text-[#625f5f] h-14 rounded-4xl mx-auto w-[90%] md:w-[70%] border-1 border-[#625F5F] focus:outline-neutral-700 focus:outline-1"
           placeholder="Enter a URL here"
-          {...register("Url")}
+          {...register("site")}
+          name="site"
         />
         <input
           className="bg-[#D9D9D9] p-5 text-[#625f5f] h-14 rounded-4xl mx-auto w-[90%] md:w-[70%] border-1 border-[#625F5F] focus:outline-neutral-700 focus:outline-1"
           placeholder="Enter Username here"
-          {...register("Username", { required: true })}
+          name="username"
+          {...register("username", { required: true })}
         />
         {errors.exampleRequired && <span>This field is required</span>}
 
-        <input
-          className="bg-[#D9D9D9] p-5 text-[#625f5f] h-14 rounded-4xl mx-auto w-[90%] md:w-[70%] border-1 border-[#625F5F] focus:outline-neutral-700 focus:outline-1"
-          placeholder="Enter a password here"
-          {...register("Password", { required: true })}
-        />
+        <div className="bg-[#D9D9D9] text-[#625f5f] h-14 rounded-4xl mx-auto w-[90%] md:w-[70%] border border-[#625F5F]  focus-within:outline-1 focus-within:outline-neutral-700 flex items-center ">
+          <input
+            type={show ? "text" : "password"}
+            className="md:w-[95%] w-[90%] h-full rounded-bl-4xl p-4 rounded-tl-4xl border-0 focus:outline-none bg-transparent"
+            name="password"
+            placeholder="Enter a password here"
+            {...register("password", { required: true })}
+          />
+          <span>
+            {" "}
+            <i
+              onClick={() => setShow((s) => !s)}
+              className={`fa-solid ${
+                show ? "fa-eye" : "fa-eye-slash"
+              } cursor-pointer`}
+            />
+          </span>
+        </div>
+
         {errors.exampleRequired && <span>This field is required</span>}
         <button
           className="bg-[#393E46] active:scale-[0.96] transform h-14 text-white cursor-pointer rounded-4xl mx-auto w-[40%] md:w-[16%] text-xl font-bold "
